@@ -1,0 +1,26 @@
+{
+  "webcredentials": {
+    "apps": [
+      "H765S43XX5.com.saveful.app"
+    ]
+  },
+  "applinks": {
+    "details": [
+      {
+        "appIDs": [
+          "H765S43XX5.com.saveful.app"
+        ],
+        "paths": [
+          "/feed",
+          "/make",
+          "/make/prep",
+          "/make/prep/*",
+          "/hacks",
+          "/hacks/*",
+          "/hacks/*/articles/*",
+          "/track"
+        ]
+      }
+    ]
+  }
+}

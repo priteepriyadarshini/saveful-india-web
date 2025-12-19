@@ -1,0 +1,13 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.saveful.app",
+      "sha256_cert_fingerprints": [
+        "23:C0:36:F6:3F:72:0F:D3:44:61:94:A8:0D:E3:0A:FA:D1:77:76:61:F7:43:F8:1C:EE:7E:C6:71:DC:EF:1A:32",
+        "5D:D6:AD:E2:AE:45:69:EE:21:A7:C0:D2:16:6C:60:4A:CE:7E:17:41:05:75:BC:60:D3:60:2D:B0:36:C8:95:03"
+      ]
+    }
+  }
+]

@@ -1,0 +1,141 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+  }
+  @font-face {
+    font-family: "Saveful-Regular";
+    src: url("../public/fonts/Saveful-Regular.woff2") format("woff2"),
+      url("../public/fonts/Saveful-Regular.woff") format("woff");
+    font-display: swap;
+  }
+
+  @font-face {
+    font-family: "Saveful-Italic";
+    src: url("../public/fonts/Saveful-Italic.woff2") format("woff2"),
+      url("../public/fonts/Saveful-Italic.woff") format("woff");
+    font-display: swap;
+  }
+
+  @font-face {
+    font-family: "Saveful-Bold";
+    src: url("../public/fonts/Saveful-Bold.woff2") format("woff2"),
+      url("../public/fonts/Saveful-Bold.woff") format("woff");
+    font-display: swap;
+  }
+
+  @font-face {
+    font-family: "Saveful-BoldItalic";
+    src: url("../public/fonts/Saveful-BoldItalic.woff2") format("woff2"),
+      url("../public/fonts/Saveful-BoldItalic.woff") format("woff");
+    font-display: swap;
+  }
+
+  @font-face {
+    font-family: "Saveful-SemiBold";
+    src: url("../public/fonts/Saveful-SemiBold.woff2") format("woff2"),
+      url("../public/fonts/Saveful-SemiBold.woff") format("woff");
+    font-display: swap;
+  }
+  @font-face {
+    font-family: "Saveful-SemiBolditalic";
+    src: url("../public/fonts/Saveful-SemiBoldItalic.woff2") format("woff2"),
+      url("../public/fonts/Saveful-SemiBoldItalic.woff") format("woff");
+    font-display: swap;
+  }
+
+  html {
+    @apply font-sans text-base leading-tightest text-black;
+  }
+
+  .h1 {
+    @apply font-sans-bold text-5xl uppercase leading-xtratight text-black;
+  }
+  .h2 {
+    @apply font-sans-bold text-4.5xl uppercase leading-xtratight text-black;
+  }
+  .h3 {
+    @apply font-sans-bold text-3.5xl uppercase leading-tightest text-black;
+  }
+  .h4 {
+    @apply font-sans-bold text-[1.75rem] uppercase leading-tightest text-black;
+  }
+  .h5 {
+    @apply font-sans-bold text-2.5xl uppercase leading-tightest text-black;
+  }
+  .h6 {
+    @apply font-sans-bold text-1.5xl uppercase leading-tighter text-black;
+  }
+  .h7 {
+    @apply font-sans-bold text-xl uppercase leading-tighter text-black;
+  }
+  .bodyLargeRegular {
+    @apply font-sans text-lg leading-tightest text-black;
+  }
+  .bodyLargeMedium {
+    @apply font-sans-semibold text-lg leading-tightest text-black;
+  }
+  .bodyLargeBold {
+    @apply font-sans-bold text-lg leading-tightest text-black;
+  }
+  .bodyMediumRegular {
+    @apply font-sans text-base leading-tightest text-black;
+  }
+  .bodyMediumBold {
+    @apply font-sans-semibold text-base leading-tightest text-black;
+  }
+  .bodySmallRegular {
+    @apply font-sans text-sm leading-tightest text-black;
+  }
+  .bodySmallBold {
+    @apply font-sans-semibold text-sm leading-tightest text-black;
+  }
+
+  .subheadLarge {
+    @apply font-sans-bold text-2.5xl leading-tighter text-black;
+  }
+  .subheadMedium {
+    @apply font-sans-bold text-1.5xl leading-tightest text-black;
+  }
+  .subheadSmall {
+    @apply font-sans-semibold text-1.5xl leading-tighter text-black;
+  }
+  .subheadLargeUppercase {
+    @apply font-sans-semibold text-sm uppercase leading-tighter text-black;
+  }
+  .subheadMediumUppercase {
+    @apply font-sans-semibold text-xs uppercase leading-tighter text-black;
+  }
+  .subheadSmallUppercase {
+    @apply font-sans-semibold text-[10px] uppercase leading-tighter text-black;
+  }
+
+  .labelLarge {
+    @apply font-sans-semibold text-base leading-tightest text-black;
+  }
+
+  .counterLarge {
+    @apply font-sans-bold text-7xl leading-tighter;
+  }
+
+  @keyframes scaleIn {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  .animate-scaleIn {
+    animation: scaleIn 0.3s ease-out;
+  }
+}
