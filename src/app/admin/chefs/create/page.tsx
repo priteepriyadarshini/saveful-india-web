@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useRoleGuard } from "@/hooks/useRoleGuard";
+import { AUTH_API } from "@/lib/api";
 
 /* ================= COUNTRY CODES ================= */
 const COUNTRY_CODES = [
@@ -48,30 +49,53 @@ export default function CreateChefPage() {
     setSuccess("");
     setLoading(true);
 
-    const fullPhoneNumber = form.phoneNumber
-  ? `${countryCode}${form.phoneNumber}`
-  : null;
+    const fullPhoneNumber = `${countryCode}${form.phoneNumber}`;
 
-if (fullPhoneNumber && !/^\+\d{8,15}$/.test(fullPhoneNumber)) {
-  setError("Invalid phone number format");
-  setLoading(false);
-  return;
-}
-
+    if (!/^\+\d{8,15}$/.test(fullPhoneNumber)) {
+      setError("Invalid phone number format");
+      setLoading(false);
+      return;
+    }
 
     try {
-      // MOCK API CALL
-      await new Promise((resolve) => setTimeout(resolve, 800));
+      const token = localStorage.getItem("accessToken");
 
-      console.log("Create Chef Payload:", form);
+      if (!token) {
+        throw new Error("Unauthorized. Please login again.");
+      }
+
+      const res = await fetch(AUTH_API.CREATE_CHEF, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          fullname: form.fullname,
+          email: form.email,
+          password: form.password,
+          phoneNumber: fullPhoneNumber,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(
+          Array.isArray(data.message)
+            ? data.message.join(", ")
+            : data.message || "Failed to create chef"
+        );
+      }
 
       setSuccess("Chef added successfully 🎉");
       setLoading(false);
 
       setTimeout(() => {
-      }, 1500);
-    } catch {
-      setError("Failed to create chef. Try again later");
+        router.push("/admin/chefs");
+      }, 1200);
+    } catch (err: any) {
+      setError(err.message || "Failed to create chef");
       setLoading(false);
     }
   };
@@ -88,7 +112,9 @@ if (fullPhoneNumber && !/^\+\d{8,15}$/.test(fullPhoneNumber)) {
 
       {/* PAGE HEADER */}
       <div className="mb-10">
-        <h1 className="font-sans-bold text-4xl mb-2">Onboard New Chef 👨‍🍳</h1>
+        <h1 className="font-sans-bold text-4xl mb-2">
+          Onboard New Chef 👨‍🍳
+        </h1>
         <p className="text-gray-500 max-w-2xl">
           Create chef login credentials. Chefs can log in using these details
           and start adding recipes to Saveful.
@@ -149,11 +175,10 @@ if (fullPhoneNumber && !/^\+\d{8,15}$/.test(fullPhoneNumber)) {
           {/* PHONE NUMBER */}
           <div>
             <label className="block mb-2 text-sm font-sans-semibold text-gray-700">
-              Phone Number (optional)
+              Phone Number
             </label>
 
             <div className="flex gap-3">
-              {/* COUNTRY CODE */}
               <select
                 value={countryCode}
                 onChange={(e) => setCountryCode(e.target.value)}
@@ -166,11 +191,11 @@ if (fullPhoneNumber && !/^\+\d{8,15}$/.test(fullPhoneNumber)) {
                 ))}
               </select>
 
-              {/* PHONE NUMBER */}
               <input
                 type="tel"
                 inputMode="numeric"
                 pattern="[0-9]*"
+                required
                 placeholder="Phone number"
                 value={form.phoneNumber}
                 onChange={(e) =>

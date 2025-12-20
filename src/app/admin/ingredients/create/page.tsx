@@ -1,47 +1,42 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useRoleGuard } from "@/hooks/useRoleGuard";
+import { INGREDIENT_API } from "@/lib/api";
 
-type IngredientType =
-  | "VEGETABLE"
-  | "FRUIT"
-  | "GRAIN"
-  | "PROTEIN"
-  | "DAIRY"
-  | "SPICE"
-  | "OIL"
-  | "OTHER";
+const INGREDIENT_TYPES = [
+  "VEGETABLE",
+  "FRUIT",
+  "GRAIN",
+  "PROTEIN",
+  "SPICE",
+  "OIL",
+  "CONDIMENT",
+  "HERB",
+  "NUT",
+  "SEED",
+  "DAIRY",
+  "OTHER",
+];
 
-type Season =
-  | "SPRING"
-  | "SUMMER"
-  | "FALL"
-  | "WINTER"
-  | "ALL_SEASON";
-
-interface Category {
-  id: string;
-  name: string;
-}
+const SEASONS = ["SPRING", "SUMMER", "FALL", "WINTER", "ALL_SEASON"];
 
 export default function CreateIngredientPage() {
+  useRoleGuard(["admin"]);
   const router = useRouter();
 
-  /* ================= STATE ================= */
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [image, setImage] = useState<File | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState<{ type: "error" | "success"; text: string } | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
 
   const [form, setForm] = useState({
     name: "",
     aliases: "",
     description: "",
     nutritionInfo: "",
-    type: "OTHER" as IngredientType,
-    categoryId: "",
-    availableSeasons: ["ALL_SEASON"] as Season[],
-    isVegetable: false,
-    isFruit: false,
+    type: "OTHER",
+    availableSeasons: [] as string[],
     isVeg: true,
     isVegan: true,
     isDairy: false,
@@ -50,22 +45,11 @@ export default function CreateIngredientPage() {
     tags: "",
   });
 
-  /* ================= FETCH CATEGORIES ================= */
-  useEffect(() => {
-    // TODO: replace with real API
-    setCategories([
-      { id: "1", name: "Vegetables" },
-      { id: "2", name: "Fruits" },
-      { id: "3", name: "Spices" },
-    ]);
-  }, []);
-
-  /* ================= HANDLERS ================= */
-  const updateField = (key: string, value: any) => {
+  const updateForm = (key: string, value: any) => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
-  const toggleSeason = (season: Season) => {
+  const toggleSeason = (season: string) => {
     setForm((prev) => ({
       ...prev,
       availableSeasons: prev.availableSeasons.includes(season)
@@ -74,247 +58,199 @@ export default function CreateIngredientPage() {
     }));
   };
 
-  /* ================= SUBMIT ================= */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setMessage(null);
 
-    const payload = new FormData();
+    if (!imageFile) {
+      return setMessage({ type: "error", text: "Ingredient image is required" });
+    }
 
-    payload.append("name", form.name);
-    payload.append("categoryId", form.categoryId);
-    payload.append("type", form.type);
+    if (!form.availableSeasons.length) {
+      return setMessage({ type: "error", text: "Select at least one season" });
+    }
 
-    if (form.description) payload.append("description", form.description);
-    if (form.nutritionInfo) payload.append("nutritionInfo", form.nutritionInfo);
+    const token = localStorage.getItem("accessToken");
+    if (!token) {
+      return setMessage({ type: "error", text: "Unauthorized access" });
+    }
 
-    payload.append(
-      "aliases",
-      JSON.stringify(
-        form.aliases
-          ? form.aliases.split(",").map((a) => a.trim())
-          : []
-      )
-    );
+    try {
+      setLoading(true);
 
-    payload.append(
-      "availableSeasons",
-      JSON.stringify(form.availableSeasons)
-    );
+      const formData = new FormData();
+      formData.append("name", form.name);
+      formData.append("type", form.type);
+      formData.append("description", form.description);
+      formData.append("nutritionInfo", form.nutritionInfo);
+      formData.append("availableSeasons", JSON.stringify(form.availableSeasons));
+      formData.append("isVeg", String(form.isVeg));
+      formData.append("isVegan", String(form.isVegan));
+      formData.append("isDairy", String(form.isDairy));
+      formData.append("isNut", String(form.isNut));
+      formData.append("isGluten", String(form.isGluten));
+      formData.append("addedBy", "ADMIN");
+      formData.append("image", imageFile);
 
-    payload.append("isVegetable", String(form.isVegetable));
-    payload.append("isFruit", String(form.isFruit));
-    payload.append("isVeg", String(form.isVeg));
-    payload.append("isVegan", String(form.isVegan));
-    payload.append("isDairy", String(form.isDairy));
-    payload.append("isNut", String(form.isNut));
-    payload.append("isGluten", String(form.isGluten));
+      formData.append(
+        "aliases",
+        JSON.stringify(form.aliases.split(",").map((v) => v.trim()).filter(Boolean))
+      );
 
-    payload.append(
-      "tags",
-      JSON.stringify(
-        form.tags ? form.tags.split(",").map((t) => t.trim()) : []
-      )
-    );
+      formData.append(
+        "tags",
+        JSON.stringify(form.tags.split(",").map((v) => v.trim()).filter(Boolean))
+      );
 
-    if (image) payload.append("image", image);
+      const res = await fetch(INGREDIENT_API.CREATE, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
 
-    console.log("Submitting ingredient", Object.fromEntries(payload.entries()));
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Failed to create ingredient");
 
-    alert("Ingredient created (mock). Wire API when ready.");
-    router.push("/admin/ingredients");
+      setMessage({ type: "success", text: "Ingredient created successfully 🎉" });
+      setTimeout(() => router.push("/admin/ingredients"), 1200);
+    } catch (err: any) {
+      setMessage({ type: "error", text: err.message || "Something went wrong" });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  /* ================= UI ================= */
   return (
-    <div className="w-full h-full px-8 py-10">
-      <div className="max-w-6xl">
-        <h1 className="font-sans-bold text-4xl mb-2">
-          Create Ingredient
-        </h1>
-        <p className="text-gray-500 mb-10">
-          Fields marked optional can be skipped
-        </p>
+    <div className="w-full px-8 py-10">
+      <button
+        onClick={() => router.back()}
+        className="text-sm text-gray-500 hover:underline mb-6"
+      >
+        ← Back to Ingredients
+      </button>
 
-        <form
-          onSubmit={handleSubmit}
-          className="bg-white rounded-3xl shadow-sm p-10 space-y-10"
-        >
-          {/* BASIC INFO */}
-          <section>
-            <h2 className="font-sans-semibold text-xl mb-4">
-              Basic Information
-            </h2>
+      <div className="mb-8">
+        <h1 className="font-sans-bold text-4xl mb-2">Create Ingredient</h1>
+        <p className="text-gray-500">Fill all details carefully.</p>
+      </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <input
-                required
-                placeholder="Ingredient Name *"
-                className="input"
-                value={form.name}
-                onChange={(e) => updateField("name", e.target.value)}
-              />
+      <div className="bg-[#FFCDF5] rounded-3xl shadow-md p-10 max-w-6xl">
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-              <select
-                required
-                className="input"
-                value={form.categoryId}
-                onChange={(e) => updateField("categoryId", e.target.value)}
-              >
-                <option value="">Select Category *</option>
-                {categories.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-
-              <select
-                className="input"
-                value={form.type}
-                onChange={(e) => updateField("type", e.target.value)}
-              >
-                {[
-                  "VEGETABLE",
-                  "FRUIT",
-                  "GRAIN",
-                  "PROTEIN",
-                  "DAIRY",
-                  "SPICE",
-                  "OIL",
-                  "OTHER",
-                ].map((t) => (
-                  <option key={t}>{t}</option>
-                ))}
-              </select>
-
-              <input
-                placeholder="Aliases (comma separated) — optional"
-                className="input"
-                value={form.aliases}
-                onChange={(e) => updateField("aliases", e.target.value)}
-              />
-            </div>
-          </section>
-
-          {/* DESCRIPTION */}
-          <section>
-            <h2 className="font-sans-semibold text-xl mb-4">
-              Description (Optional)
-            </h2>
-
-            <textarea
-              rows={4}
-              placeholder="Ingredient description"
-              className="input"
-              value={form.description}
-              onChange={(e) => updateField("description", e.target.value)}
-            />
-          </section>
-
-          {/* SEASONS */}
-          <section>
-            <h2 className="font-sans-semibold text-xl mb-4">
-              Available Seasons
-            </h2>
-
-            <div className="flex flex-wrap gap-3">
-              {["SPRING", "SUMMER", "FALL", "WINTER", "ALL_SEASON"].map(
-                (season) => (
-                  <button
-                    type="button"
-                    key={season}
-                    onClick={() => toggleSeason(season as Season)}
-                    className={`px-4 py-2 rounded-full border ${
-                      form.availableSeasons.includes(season as Season)
-                        ? "bg-[#4E267A] text-white"
-                        : "bg-white"
-                    }`}
-                  >
-                    {season}
-                  </button>
-                )
-              )}
-            </div>
-          </section>
-
-          {/* DIETARY FLAGS */}
-          <section>
-            <h2 className="font-sans-semibold text-xl mb-4">
-              Dietary Properties
-            </h2>
-
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {[
-                ["isVeg", "Vegetarian"],
-                ["isVegan", "Vegan"],
-                ["isDairy", "Contains Dairy"],
-                ["isNut", "Contains Nuts"],
-                ["isGluten", "Contains Gluten"],
-              ].map(([key, label]) => (
-                <label key={key} className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={(form as any)[key]}
-                    onChange={(e) =>
-                      updateField(key, e.target.checked)
-                    }
-                  />
-                  {label}
-                </label>
-              ))}
-            </div>
-          </section>
-
-          {/* IMAGE */}
-          <section>
-            <h2 className="font-sans-semibold text-xl mb-4">
-              Ingredient Image (Optional)
-            </h2>
-
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) =>
-                setImage(e.target.files?.[0] || null)
-              }
-            />
-          </section>
-
-          {/* ACTIONS */}
-          <div className="flex gap-6 pt-6">
-            <button
-              type="submit"
-              className="bg-[#4E267A] text-white px-10 py-3 rounded-xl font-sans-semibold text-lg hover:scale-[1.02]"
+          {message && (
+            <div
+              className={`md:col-span-2 px-4 py-3 rounded-xl font-sans-semibold ${
+                message.type === "error"
+                  ? "bg-red-100 text-red-700"
+                  : "bg-green-100 text-green-800"
+              }`}
             >
-              Create Ingredient
-            </button>
+              {message.text}
+            </div>
+          )}
 
+          <input
+            className="md:col-span-2 rounded-xl border px-4 py-3"
+            placeholder="Ingredient name"
+            value={form.name}
+            onChange={(e) => updateForm("name", e.target.value)}
+            required
+          />
+
+          <select
+            className="rounded-xl border px-4 py-3"
+            value={form.type}
+            onChange={(e) => updateForm("type", e.target.value)}
+          >
+            {INGREDIENT_TYPES.map((t) => (
+              <option key={t}>{t}</option>
+            ))}
+          </select>
+
+          <input
+            type="file"
+            accept="image/*"
+            className="rounded-xl border px-4 py-3 bg-white"
+            onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+            required
+          />
+
+          <textarea
+            className="md:col-span-2 rounded-xl border px-4 py-3"
+            placeholder="Description"
+            rows={3}
+            value={form.description}
+            onChange={(e) => updateForm("description", e.target.value)}
+            required
+          />
+
+          <input
+            className="rounded-xl border px-4 py-3"
+            placeholder="Aliases (comma separated)"
+            value={form.aliases}
+            onChange={(e) => updateForm("aliases", e.target.value)}
+            required
+          />
+
+          <input
+            className="rounded-xl border px-4 py-3"
+            placeholder="Tags (comma separated)"
+            value={form.tags}
+            onChange={(e) => updateForm("tags", e.target.value)}
+            required
+          />
+
+          <textarea
+            className="md:col-span-2 rounded-xl border px-4 py-3"
+            placeholder="Nutrition info (plain text)"
+            rows={3}
+            value={form.nutritionInfo}
+            onChange={(e) => updateForm("nutritionInfo", e.target.value)}
+            required
+          />
+
+          <div className="md:col-span-2 flex flex-wrap gap-6">
+            {SEASONS.map((s) => (
+              <label key={s} className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={form.availableSeasons.includes(s)}
+                  onChange={() => toggleSeason(s)}
+                />
+                {s}
+              </label>
+            ))}
+          </div>
+
+          <div className="md:col-span-2 flex flex-wrap gap-6">
+            {[
+              ["isVeg", "Vegetarian"],
+              ["isVegan", "Vegan"],
+              ["isDairy", "Contains Dairy"],
+              ["isNut", "Contains Nuts"],
+              ["isGluten", "Contains Gluten"],
+            ].map(([key, label]) => (
+              <label key={key} className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={(form as any)[key]}
+                  onChange={(e) => updateForm(key, e.target.checked)}
+                />
+                {label}
+              </label>
+            ))}
+          </div>
+
+          <div className="md:col-span-2 pt-6">
             <button
-              type="button"
-              onClick={() => router.back()}
-              className="text-gray-500 hover:underline"
+              disabled={loading}
+              className="bg-[#4E267A] text-white px-12 py-3 rounded-xl font-sans-semibold text-lg disabled:opacity-60"
             >
-              Cancel
+              {loading ? "Creating..." : "Create Ingredient"}
             </button>
           </div>
         </form>
       </div>
-
-      {/* INPUT STYLE */}
-      <style jsx>{`
-        .input {
-          width: 100%;
-          border: 1px solid #d1d5db;
-          border-radius: 12px;
-          padding: 12px 14px;
-          outline: none;
-        }
-        .input:focus {
-          border-color: #4e267a;
-          box-shadow: 0 0 0 2px rgba(78, 38, 122, 0.2);
-        }
-      `}</style>
     </div>
   );
 }
-
