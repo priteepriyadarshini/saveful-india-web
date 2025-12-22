@@ -40,13 +40,3 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-
-
-
-
-
-# admin 
-# {
-#     "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI4MzA5NWIzNC01NWY5LTQ1OWYtYjU5MC1iYTUxMjRkZGI4YmYiLCJyb2xlIjoiQURNSU4iLCJpYXQiOjE3NjYyMTIzMTAsImV4cCI6MTc2NjIxNTAxMH0.a789rD5xLg-2tCIC4coGjbTrU3aAnam5yRTPAlQnig4",
-#     "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI4MzA5NWIzNC01NWY5LTQ1OWYtYjU5MC1iYTUxMjRkZGI4YmYiLCJyb2xlIjoiQURNSU4iLCJpYXQiOjE3NjYyMTIzMTAsImV4cCI6MTc2NjgxNzExMH0.ltq72KeW6YAdZOSye2ETpDs4KhtMcamXQEo5UQZoTsM"
-# }
